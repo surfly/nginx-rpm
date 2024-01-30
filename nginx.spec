@@ -1,7 +1,17 @@
-%global  nginx_user          nginx
+%global nginx_user          nginx
 %global nginx_moduledir %{_libdir}/nginx/modules
 %global nginx_moduleconfdir %{_datadir}/nginx/modules
 %global nginx_srcdir %{_usrsrc}/%{name}-%{version}-%{release}
+%global lua_lib /usr/lib
+%global lua_local_lib /usr/local/lib/lua
+%global lua_nginx_module_version 0.10.26
+%global lua_resty_core_version 0.1.28
+%global lua_resty_lrucache_version 0.13
+%global ngx_devel_kit_version 0.3.3
+%global luajit2_version 2.1-20231117
+
+# By default downloading of sources is disabled
+%undefine _disable_source_fetch
 
 Name: nginx
 Summary: High performance web server
@@ -11,6 +21,11 @@ Release: 1%{?dist}
 Source0: https://nginx.org/download/%{name}-%{version}.tar.gz
 Source1: nginx.service
 Source2: nginx.logrotate
+Source100: https://github.com/openresty/lua-nginx-module/archive/refs/tags/v%{lua_nginx_module_version}.tar.gz
+Source101: https://github.com/openresty/luajit2/archive/refs/tags/v%{luajit2_version}.tar.gz
+Source102: https://github.com/vision5/ngx_devel_kit/archive/refs/tags/v%{ngx_devel_kit_version}.tar.gz
+Source103: https://github.com/openresty/lua-resty-core/archive/refs/tags/v%{lua_resty_core_version}.tar.gz
+Source104: https://github.com/openresty/lua-resty-lrucache/archive/refs/tags/v%{lua_resty_lrucache_version}.tar.gz
 
 License: BSD
 Group: System Environment/Daemons
@@ -24,10 +39,26 @@ efficiency, and flexibility. This build includes lua and modsecurity plugins.
 
 %prep
 cp %{SOURCE1} %{SOURCE2} .
-%setup
+%setup -q
+# Unpack all lua dependencies
+tar -xzvf %{SOURCE100} -C %{_builddir}
+%global SOURCE100 %{_builddir}/lua-nginx-module-%{lua_nginx_module_version}
+tar -xzvf %{SOURCE101} -C %{_builddir}
+%global SOURCE101 %{_builddir}/luajit2-%{luajit2_version}
+tar -xzvf %{SOURCE102} -C %{_builddir}
+%global SOURCE102 %{_builddir}/ngx_devel_kit-%{ngx_devel_kit_version}
+tar -xzvf %{SOURCE103} -C %{_builddir}
+%global SOURCE103 %{_builddir}/lua-resty-core-%{lua_resty_core_version}
+tar -xzvf %{SOURCE104} -C %{_builddir}
+%global SOURCE104 %{_builddir}/lua-resty-lrucache-%{lua_resty_lrucache_version}
 
+# Build luajit
+cd %{SOURCE101} && make && make install PREFIX=/usr DESTDIR=%{buildroot}/../luajit
+cp -r %{buildroot}/../luajit/* /
 
 %build
+export LUAJIT_LIB=/usr/lib
+export LUAJIT_INC=/usr/include/luajit-2.1
 export DESTDIR=%{buildroot}
 nginx_ldopts="$RPM_LD_FLAGS -Wl,-E"
 ./configure \
@@ -62,17 +93,25 @@ nginx_ldopts="$RPM_LD_FLAGS -Wl,-E"
     --with-stream_realip_module \
     --with-threads \
     --with-cc-opt="%{optflags} $(pcre2-config --cflags)" \
-    --with-ld-opt="$nginx_ldopts"
+    --with-ld-opt="$nginx_ldopts" \
+    --add-module=%{SOURCE102} \
+    --add-module=%{SOURCE100}
 
 %make_build
 
 %install
 %make_install INSTALLDIRS=vendor
+cp -r %{buildroot}/../luajit/* %{buildroot}
+cd %{SOURCE103} && make install DESTDIR=%{buildroot}
+cd %{SOURCE104} && make install DESTDIR=%{buildroot}
 
 find %{buildroot} -type f -name .packlist -exec rm -f '{}' \;
 find %{buildroot} -type f -name perllocal.pod -exec rm -f '{}' \;
 find %{buildroot} -type f -empty -exec rm -f '{}' \;
 find %{buildroot} -type f -iname '*.so' -exec chmod 0755 '{}' \;
+rm -rf %{buildroot}/usr/share/man/man1/luajit.1.gz
+rm -rf %{buildroot}/usr/lib/pkgconfig/luajit.pc
+rm -rf %{buildroot}/usr/lib/libluajit-5.1.a
 
 install -p -D -m 0644 %{SOURCE1} %{buildroot}%{_unitdir}/nginx.service
 install -p -D -m 0644 %{SOURCE2} %{buildroot}%{_sysconfdir}/logrotate.d/nginx
@@ -92,6 +131,7 @@ tree %{buildroot}
 
 %clean
 rm -rf %{buildroot}
+rm -rf %{buildroot}/../luajit
 
 %post
 %systemd_post nginx.service
@@ -136,6 +176,14 @@ rm -rf %{buildroot}
 %dir %{_sysconfdir}/nginx/default.d
 %dir %{_sysconfdir}/systemd/system/nginx.service.d
 %dir %{_unitdir}/nginx.service.d
+# lua files
+%{_bindir}/luajit*
+%{lua_lib}/libluajit-*.so
+%{lua_lib}/libluajit-*.so.*
+%{_includedir}/luajit-2.1/*
+%{_datadir}/luajit-2.1/*
+%{_mandir}/man1/luajit.1.gz
+%{lua_local_lib}/*
 
 %pre
 getent group %{nginx_user} > /dev/null || groupadd -r %{nginx_user}
