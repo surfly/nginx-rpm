@@ -21,6 +21,7 @@ Release: 1%{?dist}
 Source0: https://nginx.org/download/%{name}-%{version}.tar.gz
 Source1: nginx.service
 Source2: nginx.logrotate
+Source3: nginx.conf
 Source100: https://github.com/openresty/lua-nginx-module/archive/refs/tags/v%{lua_nginx_module_version}.tar.gz
 Source101: https://github.com/openresty/luajit2/archive/refs/tags/v%{luajit2_version}.tar.gz
 Source102: https://github.com/vision5/ngx_devel_kit/archive/refs/tags/v%{ngx_devel_kit_version}.tar.gz
@@ -38,7 +39,7 @@ nginx is a high performance web server. It is known for its stability,
 efficiency, and flexibility. This build includes lua and modsecurity plugins.
 
 %prep
-cp %{SOURCE1} %{SOURCE2} .
+cp %{SOURCE1} %{SOURCE2} %{SOURCE3} .
 %setup -q
 # Unpack all lua dependencies
 tar -xzvf %{SOURCE100} -C %{_builddir}
@@ -115,6 +116,7 @@ rm -rf %{buildroot}/usr/lib/libluajit-5.1.a
 
 install -p -D -m 0644 %{SOURCE1} %{buildroot}%{_unitdir}/nginx.service
 install -p -D -m 0644 %{SOURCE2} %{buildroot}%{_sysconfdir}/logrotate.d/nginx
+install -p -D -m 0644 %{SOURCE3} %{buildroot}%{_sysconfdir}/nginx/nginx.conf
 
 install -p -d -m 0755 %{buildroot}%{_sysconfdir}/systemd/system/nginx.service.d
 install -p -d -m 0755 %{buildroot}%{_unitdir}/nginx.service.d
@@ -127,7 +129,6 @@ install -p -d -m 0755 %{buildroot}%{_datadir}/nginx/html
 install -p -d -m 0755 %{buildroot}%{nginx_moduleconfdir}
 install -p -d -m 0755 %{buildroot}%{nginx_moduledir}
 echo 'load_module "%{nginx_moduledir}/ngx_stream_module.so";' > %{buildroot}%{nginx_moduleconfdir}/mod-stream.conf
-tree %{buildroot}
 
 %clean
 rm -rf %{buildroot}
