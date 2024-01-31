@@ -11,6 +11,7 @@
 %global luajit2_version 2.1-20231117
 %global ngx_http_redis_version 0.4.1-cmm
 %global headers_more_version 0.37
+%global modsecurity_nginx_version 1.0.3
 
 # By default downloading of sources is disabled
 %undefine _disable_source_fetch
@@ -18,7 +19,7 @@
 Name: nginx
 Summary: High performance web server
 Version: 1.25.3
-Release: 1%{?dist}
+Release: 2%{?dist}
 
 Source0: https://nginx.org/download/%{name}-%{version}.tar.gz
 Source1: nginx.service
@@ -31,11 +32,12 @@ Source103: https://github.com/openresty/lua-resty-core/archive/refs/tags/v%{lua_
 Source104: https://github.com/openresty/lua-resty-lrucache/archive/refs/tags/v%{lua_resty_lrucache_version}.tar.gz
 Source105: https://github.com/centminmod/ngx_http_redis/archive/refs/tags/%{ngx_http_redis_version}.tar.gz
 Source106: https://github.com/openresty/headers-more-nginx-module/archive/refs/tags/v%{headers_more_version}.tar.gz
+Source107: https://github.com/owasp-modsecurity/ModSecurity-nginx/archive/refs/tags/v%{modsecurity_nginx_version}.tar.gz
 
 License: BSD
 Group: System Environment/Daemons
 URL: http://nginx.org
-BuildRequires: pcre2-devel zlib-devel make gcc systemd
+BuildRequires: pcre2-devel zlib-devel make gcc systemd libmodsecurity-devel
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 
 %description
@@ -60,6 +62,8 @@ tar -xzvf %{SOURCE105} -C %{_builddir}
 %global SOURCE105 %{_builddir}/ngx_http_redis-%{ngx_http_redis_version}
 tar -xzvf %{SOURCE106} -C %{_builddir}
 %global SOURCE106 %{_builddir}/headers-more-nginx-module-%{headers_more_version}
+tar -xzvf %{SOURCE107} -C %{_builddir}
+%global SOURCE107 %{_builddir}/ModSecurity-nginx-%{modsecurity_nginx_version}
 
 # Build luajit
 cd %{SOURCE101} && make && make install PREFIX=/usr DESTDIR=%{buildroot}/../luajit
@@ -106,7 +110,8 @@ nginx_ldopts="$RPM_LD_FLAGS -Wl,-E"
     --add-module=%{SOURCE100} \
     --add-module=%{SOURCE102} \
     --add-module=%{SOURCE105} \
-    --add-module=%{SOURCE106}
+    --add-module=%{SOURCE106} \
+    --add-module=%{SOURCE107}
 
 %make_build
 
