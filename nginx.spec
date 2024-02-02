@@ -1,4 +1,4 @@
-%global nginx_user          nginx
+%global nginx_user nginx
 %global nginx_moduledir %{_libdir}/nginx/modules
 %global nginx_moduleconfdir %{_datadir}/nginx/modules
 %global nginx_srcdir %{_usrsrc}/%{name}-%{version}-%{release}
@@ -16,12 +16,13 @@
 # By default downloading of sources is disabled
 %undefine _disable_source_fetch
 
-Name: nginx
-Summary: High performance web server
+Name: nginx-lua-waf
+Summary: High performance web server nginx with lua and modsecurity plugins
 Version: 1.25.3
-Release: 2%{?dist}
+Release: 3%{?dist}
+Conflicts: nginx nginx-mimetypes nginx-core luajit
 
-Source0: https://nginx.org/download/%{name}-%{version}.tar.gz
+Source0: https://nginx.org/download/nginx-%{version}.tar.gz
 Source1: nginx.service
 Source2: nginx.logrotate
 Source3: nginx.conf
@@ -46,7 +47,7 @@ efficiency, and flexibility. This build includes lua and modsecurity plugins.
 
 %prep
 cp %{SOURCE1} %{SOURCE2} %{SOURCE3} .
-%setup -q
+%setup -n nginx-%{version}
 # Unpack all lua dependencies
 tar -xzvf %{SOURCE100} -C %{_builddir}
 %global SOURCE100 %{_builddir}/lua-nginx-module-%{lua_nginx_module_version}
