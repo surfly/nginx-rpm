@@ -1,3 +1,4 @@
+%global debug_package %{nil}
 %global nginx_user nginx
 %global nginx_moduledir %{_libdir}/nginx/modules
 %global nginx_moduleconfdir %{_datadir}/nginx/modules
