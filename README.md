@@ -27,3 +27,19 @@ internal public storage.
 - it is not possible to use COPR, as the build requires absolute path to
   `LUAJIT_LIB` and `LUAJIT_INC` which is not possible to set in COPR because
   of permissions issues.
+
+### Upload a new RPM to github releases:
+```bash
+grm release surfly/nginx-rpm -f rpms/<rpm-file> -t <version>
+
+# Example:
+# grm release surfly/nginx-rpm -f rpms/nginx-lua-waf-1.25.3-3.fc39.x86_64.rpm -t 1.25.3-3
+```
+
+### Upload a new RPM to public storage:
+```bash
+scp rpms/<rpm-file> int-storage:/data/surfly-public/
+
+# Example:
+# scp rpms/nginx-lua-waf-1.25.3-3.fc39.x86_64.rpm int-storage:/data/surfly-public/
+```
