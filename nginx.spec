@@ -9,7 +9,7 @@
 %global lua_resty_core_version 0.1.28
 %global lua_resty_lrucache_version 0.13
 %global ngx_devel_kit_version 0.3.3
-%global luajit2_version 2.1-20240314
+%global luajit2_version 2.1-20240626
 %global ngx_http_redis_version 0.4.1-cmm
 %global headers_more_version 0.37
 %global modsecurity_nginx_version 1.0.3
@@ -19,7 +19,7 @@
 
 Name: nginx-lua-waf
 Summary: High performance web server nginx with lua and modsecurity plugins
-Version: 1.25.4
+Version: 1.26.1
 Release: 1%{?dist}
 Conflicts: nginx nginx-mimetypes nginx-core luajit
 
@@ -75,6 +75,7 @@ cp -r %{buildroot}/../luajit/* /
 export LUAJIT_LIB=/usr/lib
 export LUAJIT_INC=/usr/include/luajit-2.1
 export DESTDIR=%{buildroot}
+export CFLAGS="-std=gnu89"
 nginx_ldopts="$RPM_LD_FLAGS -Wl,-E"
 ./configure \
     --prefix=%{_datadir}/nginx \
