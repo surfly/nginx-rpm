@@ -19,7 +19,7 @@
 
 Name: nginx-lua-waf
 Summary: High performance web server nginx with lua and modsecurity plugins
-Version: 1.27.3
+Version: 1.27.4
 Release: 1%{?dist}
 Conflicts: nginx nginx-mimetypes nginx-core luajit
 
