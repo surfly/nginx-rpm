@@ -1,4 +1,4 @@
-FROM fedora:41
+FROM fedora:42
 
 RUN dnf install rpm-build dnf-utils tree -y
 
