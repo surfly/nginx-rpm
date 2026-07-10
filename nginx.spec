@@ -5,7 +5,7 @@
 %global nginx_srcdir %{_usrsrc}/%{name}-%{version}-%{release}
 %global lua_lib /usr/lib
 %global lua_local_lib /usr/local/lib/lua
-%global lua_nginx_module_version 0.10.31
+%global lua_nginx_module_version 0.10.29
 %global lua_resty_core_version 0.1.32
 %global lua_resty_lrucache_version 0.15
 %global ngx_devel_kit_version 0.3.4
@@ -20,7 +20,7 @@
 Name: nginx-lua-waf
 Summary: High performance web server nginx with lua and modsecurity plugins
 Version: 1.31.2
-Release: 1%{?dist}
+Release: 2%{?dist}
 Conflicts: nginx nginx-mimetypes nginx-core luajit
 
 Source0: https://nginx.org/download/nginx-%{version}.tar.gz
