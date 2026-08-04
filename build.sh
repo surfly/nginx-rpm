@@ -12,4 +12,4 @@ podman run \
     --rm \
     -v $PWD/rpms/:/rpms:Z \
     localhost/nginx-build-image:latest \
-    bash -c "rpmbuild -bb /root/rpmbuild/SPECS/nginx.spec && cp /root/rpmbuild/RPMS/x86_64/* /rpms/"
+    bash -c "rpmbuild -bb /root/rpmbuild/SPECS/nginx.spec && cp /root/rpmbuild/RPMS/\$(uname -m)/* /rpms/"
