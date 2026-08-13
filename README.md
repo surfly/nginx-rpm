@@ -11,6 +11,7 @@ Features:
  - [ngx_http_redis module](https://github.com/centminmod/ngx_http_redis/) - caching responses in Redis
  - [headers-more-nginx-module](https://github.com/openresty/headers-more-nginx-module) - for setting headers
  - [ModSecurity](https://github.com/owasp-modsecurity/ModSecurity-nginx) - waf capabilities
+ - [njs](https://github.com/nginx/njs) - JavaScript scripting (ngx_http_js_module / ngx_stream_js_module), built as dynamic modules loaded via an absolute `load_module` path (see `mod-stream.conf` for the existing convention)
 
 ## Build instructions
 Running `./build.sh` will output a new RPM file in the `rpms/` directory.
