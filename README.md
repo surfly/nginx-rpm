@@ -3,14 +3,18 @@ nginx-lua-waf
 
 ## Description
 This is a build of nginx which supports lua and modesecurity plugin. It is intended
-to be used as a reverse proxy with caching and WAF capabilities behind a load balancer
-(it is currently built without SSL support).
+to be used as a reverse proxy with caching and WAF capabilities behind a load balancer.
+It is built with `--with-http_ssl_module` so `proxy_ssl_*` directives work when acting
+as an SSL client to an upstream (e.g. `xresproxy` fetching external HTTPS resources);
+it does not terminate client-facing TLS itself, and ships no `http_v2`/`http_v3` modules
+since nothing in our nginx configs uses them.
 
 Features:
  - [luajit 2.1 from openresty](https://github.com/openresty/luajit2) is bundled with the build
  - [ngx_http_redis module](https://github.com/centminmod/ngx_http_redis/) - caching responses in Redis
  - [headers-more-nginx-module](https://github.com/openresty/headers-more-nginx-module) - for setting headers
  - [ModSecurity](https://github.com/owasp-modsecurity/ModSecurity-nginx) - waf capabilities
+ - [njs](https://github.com/nginx/njs) - JavaScript scripting (ngx_http_js_module / ngx_stream_js_module), built as dynamic modules loaded via an absolute `load_module` path (see `mod-stream.conf` for the existing convention)
 
 ## Build instructions
 Running `./build.sh` will output a new RPM file in the `rpms/` directory.

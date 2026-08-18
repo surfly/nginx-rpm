@@ -13,14 +13,15 @@
 %global ngx_http_redis_version 0.4.1-cmm
 %global headers_more_version 0.40
 %global modsecurity_nginx_version 1.0.4
+%global njs_version 1.0.0
 
 # By default downloading of sources is disabled
 %undefine _disable_source_fetch
 
 Name: nginx-lua-waf
-Summary: High performance web server nginx with lua and modsecurity plugins
+Summary: High performance web server nginx with lua, modsecurity and njs plugins
 Version: 1.31.2
-Release: 2%{?dist}
+Release: 3%{?dist}
 Conflicts: nginx nginx-mimetypes nginx-core luajit
 
 Source0: https://nginx.org/download/nginx-%{version}.tar.gz
@@ -35,11 +36,12 @@ Source104: https://github.com/openresty/lua-resty-lrucache/archive/refs/tags/v%{
 Source105: https://github.com/centminmod/ngx_http_redis/archive/refs/tags/%{ngx_http_redis_version}.tar.gz
 Source106: https://github.com/openresty/headers-more-nginx-module/archive/refs/tags/v%{headers_more_version}.tar.gz
 Source107: https://github.com/owasp-modsecurity/ModSecurity-nginx/archive/refs/tags/v%{modsecurity_nginx_version}.tar.gz
+Source108: https://github.com/nginx/njs/archive/refs/tags/%{njs_version}.tar.gz
 
 License: BSD
 Group: System Environment/Daemons
 URL: http://nginx.org
-BuildRequires: pcre2-devel zlib-devel make gcc systemd libmodsecurity-devel
+BuildRequires: pcre2-devel zlib-devel make gcc systemd libmodsecurity-devel openssl-devel libxml2-devel libxslt-devel
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 
 %description
@@ -66,6 +68,8 @@ tar -xzvf %{SOURCE106} -C %{_builddir}
 %global SOURCE106 %{_builddir}/headers-more-nginx-module-%{headers_more_version}
 tar -xzvf %{SOURCE107} -C %{_builddir}
 %global SOURCE107 %{_builddir}/ModSecurity-nginx-%{modsecurity_nginx_version}
+tar -xzvf %{SOURCE108} -C %{_builddir}
+%global SOURCE108 %{_builddir}/njs-%{njs_version}
 
 # Build luajit
 cd %{SOURCE101} && make && make install PREFIX=/usr DESTDIR=%{buildroot}/../luajit
@@ -101,6 +105,7 @@ nginx_ldopts="$RPM_LD_FLAGS -Wl,-E"
     --with-http_realip_module \
     --with-http_secure_link_module \
     --with-http_slice_module \
+    --with-http_ssl_module \
     --with-http_stub_status_module \
     --with-http_sub_module \
     --with-pcre \
@@ -114,7 +119,8 @@ nginx_ldopts="$RPM_LD_FLAGS -Wl,-E"
     --add-module=%{SOURCE102} \
     --add-module=%{SOURCE105} \
     --add-module=%{SOURCE106} \
-    --add-module=%{SOURCE107}
+    --add-module=%{SOURCE107} \
+    --add-dynamic-module=%{SOURCE108}/nginx
 
 %make_build
 
@@ -188,6 +194,8 @@ rm -rf %{buildroot}/../luajit
 %dir %{nginx_moduleconfdir}
 %{nginx_moduleconfdir}/mod-stream.conf
 %{nginx_moduledir}/ngx_stream_module.so
+%{nginx_moduledir}/ngx_http_js_module.so
+%{nginx_moduledir}/ngx_stream_js_module.so
 %dir %{_datadir}/nginx
 %dir %{_datadir}/nginx/html
 %dir %{_sysconfdir}/nginx
