@@ -3,8 +3,11 @@ nginx-lua-waf
 
 ## Description
 This is a build of nginx which supports lua and modesecurity plugin. It is intended
-to be used as a reverse proxy with caching and WAF capabilities behind a load balancer
-(it is currently built without SSL support).
+to be used as a reverse proxy with caching and WAF capabilities behind a load balancer.
+It is built with `--with-http_ssl_module` so `proxy_ssl_*` directives work when acting
+as an SSL client to an upstream (e.g. `xresproxy` fetching external HTTPS resources);
+it does not terminate client-facing TLS itself, and ships no `http_v2`/`http_v3` modules
+since nothing in our nginx configs uses them.
 
 Features:
  - [luajit 2.1 from openresty](https://github.com/openresty/luajit2) is bundled with the build
