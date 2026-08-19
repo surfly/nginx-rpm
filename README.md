@@ -2,7 +2,9 @@ nginx-lua-waf
 ================
 
 ## Description
-This is a build of nginx which supports lua and modesecurity plugin. It is intended
+This is a build of nginx which supports lua and modsecurity plugin (lua is a
+dynamic module, loaded via `load_module`; consumers that don't need it, like
+`xresproxy`, simply don't load it). It is intended
 to be used as a reverse proxy with caching and WAF capabilities behind a load balancer.
 It is built with `--with-http_ssl_module` so `proxy_ssl_*` directives work when acting
 as an SSL client to an upstream (e.g. `xresproxy` fetching external HTTPS resources);

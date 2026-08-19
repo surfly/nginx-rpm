@@ -21,7 +21,7 @@
 Name: nginx-lua-waf
 Summary: High performance web server nginx with lua, modsecurity and njs plugins
 Version: 1.31.2
-Release: 3%{?dist}
+Release: 4%{?dist}
 Conflicts: nginx nginx-mimetypes nginx-core luajit
 
 Source0: https://nginx.org/download/nginx-%{version}.tar.gz
@@ -115,8 +115,8 @@ nginx_ldopts="$RPM_LD_FLAGS -Wl,-E"
     --with-threads \
     --with-cc-opt="%{optflags} $(pcre2-config --cflags)" \
     --with-ld-opt="$nginx_ldopts" \
-    --add-module=%{SOURCE100} \
-    --add-module=%{SOURCE102} \
+    --add-dynamic-module=%{SOURCE100} \
+    --add-dynamic-module=%{SOURCE102} \
     --add-module=%{SOURCE105} \
     --add-module=%{SOURCE106} \
     --add-module=%{SOURCE107} \
@@ -196,6 +196,8 @@ rm -rf %{buildroot}/../luajit
 %{nginx_moduledir}/ngx_stream_module.so
 %{nginx_moduledir}/ngx_http_js_module.so
 %{nginx_moduledir}/ngx_stream_js_module.so
+%{nginx_moduledir}/ndk_http_module.so
+%{nginx_moduledir}/ngx_http_lua_module.so
 %dir %{_datadir}/nginx
 %dir %{_datadir}/nginx/html
 %dir %{_sysconfdir}/nginx
