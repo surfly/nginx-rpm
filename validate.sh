@@ -40,11 +40,14 @@ EXPECTED=(
 
 echo "Validating $RPM_FILE against fedora:$FEDORA_VERSION"
 
-podman run --rm \
+LOG=$(mktemp)
+trap 'rm -f "$LOG"' EXIT
+
+podman run --rm -i \
     -v "$RPM_DIR":/rpms:Z \
     -e RPM_FILE="$RPM_FILE" \
     -e EXPECTED="${EXPECTED[*]}" \
-    "quay.io/fedora/fedora:$FEDORA_VERSION" bash -s <<'CONTAINER'
+    "quay.io/fedora/fedora:$FEDORA_VERSION" bash -s <<'CONTAINER' | tee "$LOG"
 set -euo pipefail
 
 dnf install -y "/rpms/$RPM_FILE" > /dev/null
@@ -80,6 +83,12 @@ CONF
 
 echo "--- resty.core gate ---"
 nginx -t
+
+echo VALIDATED
 CONTAINER
+
+# Drop the -i above and the container's bash reads EOF, runs nothing and exits 0,
+# so the sentinel is what proves the checks ran -- not the exit code.
+grep -qx VALIDATED "$LOG"
 
 echo "OK: $RPM_FILE"
