@@ -1,4 +1,4 @@
-FROM fedora:44
+FROM quay.io/fedora/fedora:44
 
 RUN dnf install rpm-build dnf-utils tree -y
 

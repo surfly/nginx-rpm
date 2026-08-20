@@ -19,7 +19,15 @@ Features:
  - [njs](https://github.com/nginx/njs) - JavaScript scripting (ngx_http_js_module / ngx_stream_js_module), built as dynamic modules loaded via an absolute `load_module` path (see `mod-stream.conf` for the existing convention)
 
 ## Build instructions
-Running `./build.sh` will output a new RPM file in the `rpms/` directory.
+Running `./build.sh` will output a new RPM file in the `rpms/` directory, and
+`./validate.sh` checks it: it was built from the current spec, every module
+compiled into it matches the pinned version, and all five shipped modules load —
+including `resty.core`, where a mismatched lua-nginx-module / lua-resty-core pair
+passes cobro's WAF unit tests but kills nginx in the prod config.
+
+CI does both for `x86_64` and `aarch64` on every pull request, so a local build is
+only needed to iterate on the spec. The build needs a host of the target
+architecture — it is a native `rpmbuild`, not a cross-build.
 
 ## Development instructions
 Running `./debug.sh` will build the container and start bash session inside it.
@@ -35,6 +43,19 @@ internal public storage.
   of permissions issues.
 
 ### Upload a new RPM to github releases:
+Bump `Release:` (or `Version:`) in `nginx.spec` first — a release tag has to be a
+new one, and CI rejects a tag that does not match the spec. Then push a tag named
+`<Version>-<Release>` and CI builds both architectures, validates them, and
+attaches them to that release, creating it if it does not exist yet:
+
+```bash
+# with nginx.spec at Version: 1.31.2 / Release: 5%{?dist}
+git tag 1.31.2-5 && git push origin 1.31.2-5
+```
+
+To attach an RPM by hand instead — a rebuild of an already-released tag, or an
+architecture CI cannot reach:
+
 ```bash
 grm release surfly/nginx-rpm -f rpms/<rpm-file> -t <version>
 
