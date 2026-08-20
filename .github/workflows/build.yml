@@ -34,6 +34,16 @@ jobs:
       - name: Install podman
         run: command -v podman || { sudo apt-get update && sudo apt-get install -y podman; }
 
+      - name: Check the tag matches nginx.spec
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          release=$(grep -m1 '^Release:' nginx.spec | awk '{print $2}')
+          expected="$(grep -m1 '^Version:' nginx.spec | awk '{print $2}')-${release%%\%*}"
+          if [[ "$GITHUB_REF_NAME" != "$expected" ]]; then
+            echo "tag $GITHUB_REF_NAME does not match nginx.spec ($expected)" >&2
+            exit 1
+          fi
+
       - name: Build the RPM
         run: ./build.sh
 
@@ -43,7 +53,7 @@ jobs:
           ls rpms/*.${{ matrix.arch }}.rpm > /dev/null
 
       - name: Validate the RPM
-        run: ./validate.sh
+        run: ./validate.sh rpms/*.${{ matrix.arch }}.rpm
 
       - name: Upload the RPM
         uses: actions/upload-artifact@v4
