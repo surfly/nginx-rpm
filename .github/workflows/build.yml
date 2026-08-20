@@ -83,6 +83,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
         run: |
-          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1 \
-            || gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --notes ""
+          # Tolerate an existing release; the upload below fails loudly if there
+          # is genuinely nothing to attach to.
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --notes "" || true
           gh release upload "$TAG" rpms/*.rpm --repo "$GITHUB_REPOSITORY" --clobber

@@ -20,9 +20,10 @@ Features:
 
 ## Build instructions
 Running `./build.sh` will output a new RPM file in the `rpms/` directory, and
-`./validate.sh` checks it: every module is present at the version `nginx.spec`
-pins, and `resty.core` loads (a mismatched lua-nginx-module / lua-resty-core pair
-passes cobro's WAF unit tests but kills nginx in the prod config).
+`./validate.sh` checks it: it was built from the current spec, every module
+compiled into it matches the pinned version, and all five shipped modules load —
+including `resty.core`, where a mismatched lua-nginx-module / lua-resty-core pair
+passes cobro's WAF unit tests but kills nginx in the prod config.
 
 CI does both for `x86_64` and `aarch64` on every pull request, so a local build is
 only needed to iterate on the spec. The build needs a host of the target
@@ -42,12 +43,14 @@ internal public storage.
   of permissions issues.
 
 ### Upload a new RPM to github releases:
-Push a tag named `<Version>-<Release>` (matching `nginx.spec`) and CI builds both
-architectures, validates them, and attaches them to that release — creating it if
-it does not exist yet:
+Bump `Release:` (or `Version:`) in `nginx.spec` first — a release tag has to be a
+new one, and CI rejects a tag that does not match the spec. Then push a tag named
+`<Version>-<Release>` and CI builds both architectures, validates them, and
+attaches them to that release, creating it if it does not exist yet:
 
 ```bash
-git tag 1.31.2-4 && git push origin 1.31.2-4
+# with nginx.spec at Version: 1.31.2 / Release: 5%{?dist}
+git tag 1.31.2-5 && git push origin 1.31.2-5
 ```
 
 To attach an RPM by hand instead — a rebuild of an already-released tag, or an

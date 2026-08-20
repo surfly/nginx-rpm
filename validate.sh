@@ -1,14 +1,24 @@
 #!/bin/bash
 
-# Validates a built RPM before it is released: every module is present at the
-# version nginx.spec pins, and resty.core actually loads. The WAF unit tests in
-# cobro use a minimal config that never requires resty.core, so a mismatched
-# lua-nginx-module / lua-resty-core pair passes them and kills nginx in prod.
+# Validates a built RPM before it is released: it was built from the current spec,
+# every module compiled into it matches the version nginx.spec pins, and all five
+# shipped modules load. The WAF unit tests in cobro use a minimal config that never
+# requires resty.core, so a mismatched lua-nginx-module / lua-resty-core pair passes
+# them and kills nginx in prod -- the nginx -t gate below is what catches that.
+#
+# luajit2, lua-resty-core and lua-resty-lrucache are not version-checked: none of
+# them appear in `nginx -V`, luajit reports a rolling build number rather than its
+# tag, and lrucache's own _VERSION lags its release tag upstream.
 
 set -euo pipefail
 
 CALLER_PWD=$PWD
 cd "$(dirname "$(readlink -f "$0")")"
+
+if [[ $# -gt 1 ]]; then
+    echo "usage: $0 [path-to-rpm]   (one at a time)" >&2
+    exit 1
+fi
 
 RPM_PATH="${1:-}"
 if [[ -n "$RPM_PATH" && "$RPM_PATH" != /* ]]; then
@@ -32,10 +42,27 @@ fi
 RPM_DIR=$(cd "$(dirname "$RPM_PATH")" && pwd)
 RPM_FILE=$(basename "$RPM_PATH")
 
-FEDORA_VERSION=$(echo "$RPM_FILE" | grep -oE '\.fc[0-9]+\.' | tr -d '.fc' || true)
+# nginx-lua-waf-<version>-<release>.fc<N>.<arch>.rpm
+if [[ ! "$RPM_FILE" =~ ^nginx-lua-waf-([0-9.]+)-([0-9]+)\.fc([0-9]+)\.[^.]+\.rpm$ ]]; then
+    echo "cannot parse a version, release and Fedora version out of $RPM_FILE" >&2
+    exit 1
+fi
+RPM_VERSION="${BASH_REMATCH[1]}"
+RPM_RELEASE="${BASH_REMATCH[2]}"
+FEDORA_VERSION="${BASH_REMATCH[3]}"
+
 NGINX_VERSION=$(grep -m1 '^Version:' nginx.spec | awk '{print $2}' || true)
-if [[ -z "$FEDORA_VERSION" || -z "$NGINX_VERSION" ]]; then
-    echo "cannot read the Fedora version from $RPM_FILE or Version: from nginx.spec" >&2
+SPEC_RELEASE=$(grep -m1 '^Release:' nginx.spec | awk '{print $2}' || true)
+SPEC_RELEASE=${SPEC_RELEASE%%\%*}
+if [[ -z "$NGINX_VERSION" || -z "$SPEC_RELEASE" ]]; then
+    echo "cannot read Version: or Release: from nginx.spec" >&2
+    exit 1
+fi
+
+# One stale RPM in rpms/ passes every other check here, since the expected module
+# versions come from the same spec that would have built it.
+if [[ "$RPM_VERSION-$RPM_RELEASE" != "$NGINX_VERSION-$SPEC_RELEASE" ]]; then
+    echo "$RPM_FILE is $RPM_VERSION-$RPM_RELEASE, nginx.spec says $NGINX_VERSION-$SPEC_RELEASE" >&2
     exit 1
 fi
 
@@ -83,7 +110,7 @@ nginx -V 2>&1 | tee /tmp/nginx-V
 
 missing=0
 for want in $EXPECTED; do
-    if grep -qF "$want" /tmp/nginx-V; then
+    if grep -qE "${want//./\\.}([^0-9.]|\$)" /tmp/nginx-V; then
         echo "ok      $want"
     else
         echo "MISSING $want"

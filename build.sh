@@ -6,8 +6,6 @@ set -euo pipefail
 echo "Building image..."
 podman build -t nginx-build-image -f Containerfile .
 
-mkdir -p rpms
-
 echo "Building rpm..."
 podman run \
     --name nginx-builder \
