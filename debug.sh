@@ -15,5 +15,6 @@ podman run \
     -v $PWD/nginx.spec:/root/rpmbuild/SPECS/nginx.spec:Z \
     -v $PWD/nginx.service:/root/rpmbuild/SOURCES/nginx.service:Z \
     -v $PWD/nginx.logrotate:/root/rpmbuild/SOURCES/nginx.logrotate:Z \
-    localhost/nginx-build-image:latest \
+    -v $PWD/nginx.conf:/root/rpmbuild/SOURCES/nginx.conf:Z \
+    localhost/nginx-build-image-debug:latest \
     bash -c "yum-builddep -y /root/rpmbuild/SPECS/nginx.spec && cd /root/rpmbuild/SPECS/ && bash"

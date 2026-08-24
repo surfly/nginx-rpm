@@ -1,0 +1,89 @@
+name: Build
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    tags: ['*']
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    name: Build (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-24.04
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install podman
+        run: command -v podman || { sudo apt-get update && sudo apt-get install -y podman; }
+
+      - name: Check the tag matches nginx.spec
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          release=$(grep -m1 '^Release:' nginx.spec | awk '{print $2}')
+          expected="$(grep -m1 '^Version:' nginx.spec | awk '{print $2}')-${release%%\%*}"
+          if [[ "$GITHUB_REF_NAME" != "$expected" ]]; then
+            echo "tag $GITHUB_REF_NAME does not match nginx.spec ($expected)" >&2
+            exit 1
+          fi
+
+      - name: Build the RPM
+        run: ./build.sh
+
+      - name: Check the RPM is ${{ matrix.arch }}
+        run: |
+          ls -l rpms/
+          ls rpms/*.${{ matrix.arch }}.rpm > /dev/null
+
+      - name: Validate the RPM
+        run: ./validate.sh rpms/*.${{ matrix.arch }}.rpm
+
+      - name: Upload the RPM
+        uses: actions/upload-artifact@v4
+        with:
+          name: rpm-${{ matrix.arch }}
+          path: rpms/*.rpm
+          if-no-files-found: error
+
+  release:
+    name: Attach RPMs to the release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download the RPMs
+        uses: actions/download-artifact@v4
+        with:
+          pattern: rpm-*
+          merge-multiple: true
+          path: rpms
+
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          # Tolerate an existing release; the upload below fails loudly if there
+          # is genuinely nothing to attach to.
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --notes "" || true
+          gh release upload "$TAG" rpms/*.rpm --repo "$GITHUB_REPOSITORY" --clobber
