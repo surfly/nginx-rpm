@@ -6,21 +6,21 @@
 %global lua_lib /usr/lib
 %global lua_local_lib /usr/local/lib/lua
 %global lua_nginx_module_version 0.10.29
-%global lua_resty_core_version 0.1.32
+%global lua_resty_core_version 0.1.32R1
 %global lua_resty_lrucache_version 0.15
 %global ngx_devel_kit_version 0.3.4
-%global luajit2_version 2.1-20260914
+%global luajit2_version 2.1-20261023
 %global ngx_http_redis_version 0.4.1-cmm
-%global headers_more_version 0.40
+%global headers_more_version 0.41
 %global modsecurity_nginx_version 1.0.4
-%global njs_version 1.0.1
+%global njs_version 1.0.2
 
 # By default downloading of sources is disabled
 %undefine _disable_source_fetch
 
 Name: nginx-lua-waf
 Summary: High performance web server nginx with lua, modsecurity and njs plugins
-Version: 1.31.6
+Version: 1.31.8
 Release: 1%{?dist}
 Conflicts: nginx nginx-mimetypes nginx-core luajit
 
